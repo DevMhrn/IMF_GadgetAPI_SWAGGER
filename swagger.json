@@ -1,0 +1,356 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "IMF Gadget API",
+    "version": "1.0.0",
+    "description": "Top-secret gadget management system for IMF agents",
+    "contact": {
+      "name": ": IMF Technical Support , Your Tech Guy 😜",
+      "email": "debashismaharana7854@gmail.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/api",
+      "description": "Local server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'"
+      }
+    },
+    "schemas": {
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "email": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string",
+                "enum": ["ADMIN", "AGENT"]
+              }
+            }
+          }
+        }
+      },
+      "Gadget": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["Available", "Deployed", "Destroyed", "Decommissioned"]
+          },
+          "decommissionedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "UserId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "GadgetResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["Available", "Deployed", "Destroyed", "Decommissioned"]
+          },
+          "decommissionedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "missionSuccessProbability": {
+            "type": "string",
+            "description": "Random probability of mission success"
+          },
+          "selfDestructCode": {
+            "type": "string",
+            "description": "Unique code generated after self-destruct (only for self-destruct endpoint)"
+          },
+          "User": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string",
+                "enum": ["ADMIN", "AGENT"]
+              }
+            }
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "summary": "User login/registration",
+        "description": "Authenticates user or creates new account if not exists",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password", "role"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "User's full name"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": ["ADMIN", "AGENT"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required fields"
+          },
+          "401": {
+            "description": "Invalid credentials or unauthorized role"
+          }
+        }
+      }
+    },
+    "/gadgets": {
+      "get": {
+        "summary": "Get all gadgets",
+        "security": [{"BearerAuth": []}],
+        "parameters": [{
+          "in": "query",
+          "name": "status",
+          "schema": {
+            "type": "string",
+            "enum": ["Available", "Deployed", "Destroyed", "Decommissioned"]
+          },
+          "description": "Filter gadgets by status"
+        }],
+        "responses": {
+          "200": {
+            "description": "List of gadgets with mission success probability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GadgetResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new gadget",
+        "security": [{"BearerAuth": []}],
+        "description": "Creates a new gadget with an auto-generated codename",
+        "responses": {
+          "201": {
+            "description": "Gadget created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Gadget"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/gadgets/{id}": {
+      "parameters": [{
+        "in": "path",
+        "name": "id",
+        "schema": {
+          "type": "string"
+        },
+        "required": true,
+        "description": "Gadget UUID"
+      }],
+      "patch": {
+        "summary": "Update gadget status",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Gadget updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GadgetResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot update destroyed gadget"
+          },
+          "404": {
+            "description": "Gadget not found or unauthorized"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Decommission gadget",
+        "security": [{"BearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Gadget decommissioned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GadgetResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Gadget already destroyed or decommissioned"
+          },
+          "404": {
+            "description": "Gadget not found or unauthorized"
+          }
+        }
+      }
+    },
+    "/gadgets/{id}/self-destruct": {
+      "post": {
+        "summary": "Initiate gadget self-destruct",
+        "security": [{"BearerAuth": []}],
+        "parameters": [{
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "type": "string"
+          },
+          "required": true,
+          "description": "Gadget UUID"
+        }],
+        "responses": {
+          "200": {
+            "description": "Self-destruct successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["Available", "Deployed", "Destroyed", "Decommissioned"]
+                    },
+                    "missionSuccessProbability": {
+                      "type": "string"
+                    },
+                    "selfDestructCode": {
+                      "type": "string",
+                      "description": "Unique code generated after self-destruct"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Gadget already destroyed"
+          },
+          "404": {
+            "description": "Gadget not found or unauthorized"
+          }
+        }
+      }
+    }
+  }
+}
