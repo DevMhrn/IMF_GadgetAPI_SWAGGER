@@ -13,7 +13,8 @@ import limiter from './middlewares/rateLimiter.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { readFileSync } from 'fs';
-
+import helmet from 'helmet';
+import morgan from 'morgan';
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -39,6 +40,8 @@ app.use((req, res, next) => {
 // Middleware
 
 app.use(limiter); // Apply rate limiter to all requests
+app.use(helmet()); // Apply security headers
+app.use(morgan('combined', { stream: logger.stream })); // Apply logging with morgan
 
 // CORS Configuration
 const allowedOrigins = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []; // Array for potential future multiple origins
