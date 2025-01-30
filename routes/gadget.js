@@ -9,6 +9,13 @@ import {
 import { authenticateToken } from '../middlewares/auth.js';
 
 const router = express.Router();
+router.get('/', (req, res) => {
+    res.json({
+      message: 'IMF Gadget API - Operation, Keep it secret, keep it safe',
+      documentation: '/api-docs',
+      status: 'SECRET'
+    });
+});
 
 // Public route
 router.get('/',authenticateToken , getAllGadgets);
